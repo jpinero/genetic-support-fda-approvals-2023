@@ -1,0 +1,56 @@
+Drug (brand name)	Sponsor	Properties	Indication	Review
+Lecanemab (Leqembi)a	Eisai/Biogen	Amyloid-β-targeted mAb	Alzheimer disease	P, B, A
+Bexagliflozin (Brenzavvy)	Theracosbio	SGLT2 inhibitor	Glycaemic control in type 2 diabetes mellitus	S
+Pirtobrutinib (Jaypirca)	Loxo/Eli Lilly	BTK inhibitor	Mantle cell lymphoma	P, O, A
+Elacestrant (Orserdu)	Stemline	ER antagonist	ER-positive, HER2-negative, ESR1-mutant breast cancer	P
+Daprodustat (Jesduvroq)	GSK	HIF-PH inhibitor	Anaemia caused by CKD for adults on dialysis	S
+Velmanase alfa (Lamzede)a	Chiesi	Recombinant α-mannosidase	Non-CNS manifestations of α-mannosidosis	P, O
+Sparsentan (Filspari)	Travere	Endothelin and angiotensin II receptor antagonist	Proteinuria in primary IgA nephropathy	P, O, A
+Omaveloxolone (Skyclarys)	Reata/Biogen	Mechanism unknown, NRF2 activator	Friedrich’s ataxia	P, O
+Zavegepant (Zavzpret)	Pfizer	CGRP receptor antagonist	Migraine	S
+Trofinetide (Daybue)	Acadia	Mechanism unknown	Rett syndrome	P, O
+Retifanlimab (Zynyz)a	Incyte	PD1-targeted mAb	Merkel cell carcinoma	P, O, A
+Rezafungin (Rezzayo)	Cidara	Echinocandin antifungal	Candidemia and invasive candidiasis	P, O
+Leniolisib (Joenja)	Pharming	PI3Kδ inhibitor	Activated PI3Kδ syndrome	P, O
+Tofersen (Qalsody)	Biogen	SOD1-targeted ASO	SOD1 amyotrophic lateral sclerosis	P, O, A
+Pegunigalsidase alfa (Elfabrio)a	Chiesi	PEGylated recombinant α-galactosidase Α	Fabry disease	P
+Fezolinetant (Veozah)	Astellas	Neurokinin 3 receptor antagonist	Hot flashes caused by menopause	S
+Perfluorohexyloctane (Miebo)	Bausch + Lomb	Semifluorinated alkane	Dry eye disease	S
+Epcoritamab (Epkinly)a	Genmab/AbbVie	CD20 × CD3 T-cell engager	DLBCL and high-grade B-cell lymphoma	P, A
+Sulbactam, durlobactam (Xacduro)	Entasis	β-lactam antibacterial plus a β-lactamase inhibitor	Hospital-acquired and ventilator-associated bacterial pneumonia caused by susceptible ABC	P
+Nirmatrelvir, ritonavir (Paxlovid)	Pfizer	SARS-CoV-2 main protease inhibitor plus a CYP3A inhibitor	Mild-to-moderate COVID-19	P
+Flotufolastat F18 (Posluma)	Blue Earth	Radioactive diagnostic agent	PET imaging in prostate cancer	S
+Sotagliflozin (Inpefa)	Lexicon	SGLT1/2 inhibitor	Heart failure	S
+Glofitamab (Columvi)a	Genentech	CD20 × CD3 T-cell engager	DLBCL or large B-cell lymphoma	P, A
+Ritlecitinib (Litfulo)	Pfizer	JAK3 inhibitor	Alopecia areata	S
+Rozanolixizumab (Rystiggo)a	UCB	FcRn-targeted mAb	AChR- or MuSK-antibody-positive gMG	P, O
+Somatrogon (Ngenla)a	Pfizer	Human growth hormone analogue	Growth hormone deficiency	S, O
+Nirsevimab (Beyfortus)a	AstraZeneca	RSV F protein-targeted mAb	RSV lower respiratory tract disease	S
+Quizartinib (Vanflyta)	Daiichi Sankyo	FLT3 kinase inhibitor	AML	P, O
+Lotilaner (Xdemvy)	Tarsus	Ectoparasiticide	Demodex blepharitis	S
+Zuranolone (Zurzuvae)	Sage	GABAA receptor PAM	Postpartum depression	P
+Avacincaptad pegol (Izervay)	Iveric/Astellas	C5-targeted aptamer	Geographic atrophy secondary to AMD	P, B
+Talquetamab (Talvey)a	Janssen	GPRC5D × CD3 T-cell engager	Multiple myeloma	P, O, B, A
+Elranatamab (Elrexfio)a	Pfizer	BCMA × CD3 T-cell engager	Multiple myeloma	P, O, B, A
+Palovarotene (Sohonos)	Ipsen	Retinoic acid receptor agonist	Fibrodysplasia ossificans progressiva	P, O
+Pozelimab (Veopoz)a	Regeneron	C5-targeted mAb	CHAPLE disease	P, O
+Motixafortide (Aphexda)	Biolinerx	CXCR4 inhibitor	Haematopoietic stem cell mobilization for autologous transplantation in multiple myeloma	S, O
+Momelotinib (Ojjaara)	GSK	JAK1/2, ALK2 inhibitor	Myelofibrosis in adults with anaemia	S, O
+Gepirone (Exxua)	Fabre-Kramer	5HT1A receptor agonist	Major depressive disorder	S
+Cipaglucosidase alfa (Pombiliti)a	Amicus	Recombinant α-glucosidase	Pompe disease	S, O, B
+Nedosiran (Rivfloza)	Novo Nordisk	LDHA-targeted siRNA	Primary hyperoxaluria type 1	S, O, B
+Etrasimod (Velsipity)	Pfizer	S1P receptor modulator	Ulcerative colitis	S
+Zilucoplan (Zilbrysq)	UCB	Complement C5 inhibitor	AChR-antibody positive gMG	S, O
+Bimekizumab (Bimzelx)a	UCB	IL-17A/F-targeted mAb	Plaque psoriasis	S
+Vamorolone (Agamree)	Santhera	Corticosteroid	Duchenne muscular dystrophy	S, O
+Mirikizumab (Omvoh)a	Eli Lilly	IL-23-targeted mAb	Ulcerative colitis	S
+Toripalimab (Loqtorzi)a	Coherus	PD1-targeted mAb	Nasopharyngeal carcinoma	P, O, B
+Fruquintinib (Fruzaqla)	Takeda	VEGFR1/2/3 kinase inhibitor	Colorectal cancer	P
+Taurolidine, heparin (Defencath)	Cormedix	Thiadiazinane antimicrobial plus an anticoagulant	Incidence of catheter-related bloodstream infections	P
+Repotrectinib (Augtyro)	Bristol Myers Squibb	ROS1 and TRK kinase inhibitor	ROS1-positive NSCLC	P, O
+Efbemalenograstim alfa (Ryzneuta)a	Evive	Recombinant leukocyte growth factor	Neutropenia	S
+Capivasertib (Truqap)	AstraZeneca	AKT kinase inhibitor	Breast cancer	P
+Nirogacestat (Ogsiveo)	Springworks	γ-secretase inhibitor	Desmoid tumours	P, O, B
+Iptacopan (Fabhalta)	Novartis	Complement factor B inhibitor	Paroxysmal nocturnal haemoglobinuria	S, O, B
+Birch triterpenes (Filsuvez)	Chiesi	Mechanism unknown	Epidermolysis bullosa	P, O
+Eplontersen (Wainua)	Ionis/AstraZeneca	TTR-targeted ASO	hATTR with polyneuropathy	S, O

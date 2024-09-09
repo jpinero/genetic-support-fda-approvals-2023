@@ -1,0 +1,133 @@
+h1 {
+  font-size: 18pt;
+  font-weight: bold;
+
+}
+h2 {
+  font-size: 14pt;
+  font-weight: bold;
+}
+
+h3 {
+  font-size: 12pt;
+  font-weight: bold;
+}
+
+#header {
+  text-align: left;
+  font-size: 12px;
+}
+
+#TOC {
+  clear: both;
+  /*margin: 0 0 10px 10px;*/
+  padding: 4px;
+  width: 100%;
+  border: 1px solid #CCCCCC;
+  border-radius: 5px;
+
+  background-color: #f6f6f6;
+  font-size: 13px;
+  line-height: 1.3;
+}
+  #TOC .toctitle {
+    font-weight: bold;
+    font-size: 15px;
+    margin-left: 5px;
+  }
+
+  #TOC ul {
+    padding-left: 40px;
+    margin-left: -1.5em;
+    margin-top: 5px;
+    margin-bottom: 5px;
+  }
+  #TOC ul ul {
+    margin-left: -2em;
+  }
+  #TOC li {
+    line-height: 16px;
+  }
+
+
+
+p {
+  margin: 1em 0;
+}
+
+blockquote {
+  background-color: #f6f6f6;
+  padding: 0.25em 0.75em;
+}
+
+hr {
+  border-style: solid;
+  border: none;
+  border-top: 1px solid #777;
+  margin: 28px 0;
+}
+
+
+pre, code {
+  background-color: #EEE;
+  color: #333;
+  /*border-radius: 3px;*/
+}
+pre {
+  border: 2px solid #EEE;
+  overflow: auto;
+  white-space: pre-wrap;    /* Wrap long lines */
+  /*
+  border-radius: 3px;
+  */
+  margin: 5px 0px;
+  padding: 5px 10px;
+}
+code {
+  font-size: 85%;
+}
+
+div.figure {
+  text-align: center;
+}
+img {
+  background-color: #FFFFFF;
+  padding: 2px;
+  /*border: 1px solid #DDDDDD; */
+  border-radius: 3px;
+  border: 1px solid #FFFFFF;
+  margin: 0 5px;
+}
+
+.disease{
+	font-size:90%;
+	border:2px;
+	background-color: #deddff;
+}
+
+.gene{
+	font-size:90%;
+	border:2px;
+	background-color: #ffcd99;
+	margin-right: 2px;
+}
+
+.variant{
+	font-size:90%;
+	background-color: #ff5e99;
+}
+
+.drug{
+	font-size:90%;
+	background-color: #17a2b8;
+}
+.negexp {
+     background-color: #d5ff00;
+     color: black;
+}
+
+span.negexp {
+     background-color: #d5ff00;
+     color: black;
+}
+

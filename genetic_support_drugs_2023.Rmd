@@ -1,0 +1,387 @@
+---
+title: "Genetic support \n for FDA drug approvals \n 2023"
+date: "Last update: `r Sys.setlocale('LC_TIME', 'C') ; format(Sys.time(), '%d, %B, %Y')`"    
+output:
+  html_document:
+    toc: true
+    fig_caption: true
+css: style.css
+bibliography: fda.bib
+biblio-style: apalike
+
+
+---
+<br>
+<b>DISGENET  is provided by [Medbioinformatics Solutions S.L.](https://www.medbioinformatics.com/)</b>   
+Rambla de Cataluña 14, 7º 1ª 
+08007  Barcelona (Spain)   
+<b>Contact us at </b> info@disgenet.com   
+
+
+
+```{r set-options, echo=FALSE, cache=FALSE}
+knitr::opts_chunk$set(
+  eval=TRUE
+)
+htmltools::img(src = knitr::image_uri(file.path(".", "images/logo_disgenet.png")), 
+               alt = 'logo', 
+               style = 'position:absolute; top:0; right:0; padding:10px;')
+```
+
+# Introduction
+
+
+
+```{r,  echo=FALSE, warning=F, message=FALSE, eval=TRUE, cache=F}
+rm(list =ls())
+library(data.table)
+library(DT)
+library(tidyr)
+library(dplyr)
+library(httr)
+library(jsonlite)
+library(kableExtra)
+
+
+source("disgenet_api.R")
+httr::set_config(config(ssl_verifypeer = 0L))
+base <- "https://api.disgenet.com/api/v1/"
+
+
+fda <- fread("data/nrdd_table_1.tsv")
+fda <- rename(fda, Drug_brand_name = `Drug (brand name)`)
+fda$Drug_brand_name <- gsub(")a", ")", fda$Drug_brand_name )
+fda$Drug_brand_name <- gsub(")b", ")", fda$Drug_brand_name )
+
+
+mecha <- fread("data/normalized_fda_data.tsv" )
+human_drugs <- mecha[ mecha$target_organism == "Homo sapiens",]$Drug_brand_name %>% unique()
+
+nonhuman_drugs <- mecha[! mecha$Drug_brand_name %in% human_drugs,]$Drug_brand_name %>% unique()
+human_drugs_with_mech <- mecha[ mecha$target_organism == "Homo sapiens" & mecha$Symbol!="",]$Drug_brand_name %>% unique()
+
+mecha_splited <- mecha %>% filter(target_organism == "Homo sapiens" & Symbol!="") %>%
+  select(chembl_id, ChEMBL_pref_name, Drug_brand_name, Symbol, manual) %>% unique()
+mecha_splited <- separate_rows(mecha_splited, Symbol, sep = "; ")
+
+diseases_exact <- mecha %>% select(Indication, indication_to_cui_relationship, diseaseid, disease_name, target_organism, ) %>% filter(indication_to_cui_relationship == TRUE  ) %>% select(Indication, diseaseid, disease_name , target_organism) %>% unique()
+
+diseases_similar <- mecha %>% select(Indication, indication_to_cui_relationship, diseaseid, disease_name, target_organism, ) %>% filter(indication_to_cui_relationship == FALSE  ) %>% select(Indication, diseaseid, disease_name ) %>% unique()
+
+
+drugs <- mecha %>% select(Drug_brand_name, chembl_id, ChEMBL_pref_name, relation) %>% unique()
+fda <- merge(fda, drugs, by = "Drug_brand_name")
+
+fda_exact <- merge(fda, diseases_exact, by= "Indication" )
+fda_exact_target <- merge(fda_exact, mecha_splited, by = c("Drug_brand_name", "chembl_id"), allow.cartesian = T) 
+
+fda_similar <- merge(fda, diseases_similar, by = "Indication")
+fda_similar_target <- merge(fda_similar, mecha_splited, by = c("Drug_brand_name", "chembl_id"), allow.cartesian = T)
+
+dd <- mecha %>% select(Indication, diseaseid, disease_name) %>% unique()
+fda_both<- merge(fda, dd, by = "Indication")
+fda_both <- merge(fda_both, mecha_splited, by = c("Drug_brand_name", "chembl_id"), allow.cartesian = T)
+
+
+```
+
+What is the genetic support for the `r length(unique(fda$Drug_brand_name))` drugs that were approved by the FDA this year [@mullard_2023]? To answer this question requires accessing all current knowledge regarding the association of the drug target to the disease and data analytics capabilities that are provided in platforms like [DISGENET](https://www.disgenet.com/) [@Pinero2019]. 
+
+
+```{r, results='asis', warning= F, echo=FALSE, message=FALSE ,fig.width= 10, fig.height= 10, eval=T}
+
+library(data.table)
+library(DT)
+
+library(dplyr)
+library(httr)
+library(tidyr)
+library(kableExtra)
+tbl <- fda   %>% select(Drug_brand_name, Sponsor,Properties, Indication ) %>% unique()
+DT::datatable(tbl, caption = "Table 1: 2023 FDA approvals" ,  filter = 'top', options = list(pageLength = 10,  autoWidth = F), rownames = F)
+```
+
+# Data
+
+## Preprocessing 
+We will remove from the analysis `r length(unique(fda[  fda$Drug_brand_name %in% nonhuman_drugs, ]$Drug_brand_name))`  drugs that target proteins from other organisms (Table 2). Note that two drugs, Defencath and Paxlovid, are combinations targeting both human and non-human organisms and will be included in the analysis using the human target. 
+
+```{r, results='asis', warning= F, echo=FALSE, message=FALSE ,fig.width= 10, fig.height= 10, eval=T}
+
+tbl <- fda[  fda$Drug_brand_name %in% nonhuman_drugs, ] %>% select(Drug_brand_name, Properties, Indication) %>% unique()
+
+kableExtra::kable(tbl, caption = "Table 2: Drugs without human targets", row.names = F) %>%  kableExtra::kable_styling(bootstrap_options = "striped", full_width = F)
+
+```
+
+... and `r length(unique(fda[! fda$Drug_brand_name %in% human_drugs_with_mech & ! fda$Drug_brand_name %in% nonhuman_drugs, ]$Drug_brand_name))` drugs that do not target a gene or protein (Table 3). 
+
+
+```{r, results='asis', warning= F, echo=FALSE, message=FALSE ,fig.width= 10, fig.height= 10, eval=T}
+
+tbl <- fda[! fda$Drug_brand_name %in% human_drugs_with_mech  & ! fda$Drug_brand_name %in% nonhuman_drugs, ] %>% select(Drug_brand_name, Properties, Indication) %>% unique()
+
+# tbl$Indication <- gsub("ALL and LBL, in patients allergic to E. coli-derived products", "ALL and LBL, in patients allergic\nto E. coli-derived products", tbl$Indication)
+kableExtra::kable(tbl, format = 'html',caption = "Table 3: Drugs without protein/gene targets", row.names = F) %>%  kableExtra::kable_styling(bootstrap_options = "striped", full_width = F)
+
+```
+
+## Converting indications to UMLS identifiers
+
+The remaining `r length(human_drugs_with_mech) ` drugs are indicated for `r length(unique(fda[fda$Drug_brand_name %in% human_drugs_with_mech,]$Indication)) ` conditions. We mapped `r length(unique(diseases_exact[Indication %in% fda[ fda$Drug_brand_name %in% human_drugs_with_mech , ]$Indication & ! is.na(diseases_exact$diseaseid)]$diseaseid))`  indications to an exact [Unified Medical Language System](https://uts.nlm.nih.gov/uts/umls/home) (UMLS) Concept Unique Identifiers (CUI), corresponding to `r length(diseases_exact[ !Indication %in% fda[! fda$Drug_brand_name %in% mecha$Drug_brand_name , ]$Indication]$diseaseid)` CUIs (Table 4). Using UMLS CUIs allowed more exact mappings of the indications for the drugs, due to the richer and more granular descriptions of phenotypes provided by the UMLS. 
+
+
+```{r, results='asis', warning= F, echo=FALSE, message=FALSE ,fig.width= 10, fig.height= 10, eval=T}
+
+tbl <- fda_exact[ fda_exact$Drug_brand_name %in% human_drugs_with_mech,]  %>% select(Indication, disease_name) %>% unique()
+aa <-   fda_exact[ fda_exact$Drug_brand_name %in% human_drugs_with_mech,]   %>% select(Indication, diseaseid) %>% unique()
+
+tbl <- aggregate(disease_name ~ Indication , tbl,  function(x)paste(as.character(x),collapse="; "))
+aa <- aggregate(diseaseid ~ Indication , aa,  function(x)paste(as.character(x),collapse="; "))
+tbl <- merge(aa, tbl, by = "Indication")
+
+DT::datatable(tbl, caption = "Table 4: Exact mappings of indications to UMLS vocabulary" ,  filter = 'top', options = list(pageLength = 10,  autoWidth = F), rownames = F)
+
+```
+
+
+Indications with no direct mappings to UMLS were manually assign to similar terms (Table 5). 
+
+```{r, results='asis', warning= F, echo=FALSE, message=FALSE ,fig.width= 10, fig.height= 10, eval=T}
+ 
+tbl <- diseases_similar[! diseases_similar$Indication %in% fda_exact$Indication  , ]
+aa <- diseases_similar[! diseases_similar$Indication %in% fda_exact$Indication , ]
+tbl <- aggregate(disease_name ~ Indication , tbl,  function(x)paste(as.character(x),collapse="; "))
+aa <- aggregate(diseaseid ~ Indication, aa,  function(x)paste(as.character(x),collapse="; "))
+tbl <- merge(aa, tbl, by = "Indication")
+
+
+kableExtra::kable(tbl, caption = "Table 5: Mappings to similar conditions", row.names = T) %>%  kableExtra::kable_styling(bootstrap_options = "striped", full_width = F)
+
+```
+
+
+Finally, one indication could not be mapped to any concept: (`r mecha[is.na(mecha$indication_to_cui_relationship ), ]$Indication `). 
+ 
+
+
+## Drug-target information  
+
+
+We used the indications from [ChEMBL](https://www.ebi.ac.uk/chembl/g/#browse/drug_indications) to find the targets for the FDA approvals (Table 7). All `r format(length(unique(human_drugs_with_mech)),big.mark=",",scientific=FALSE)`  drugs were found to be associated to at least one human target, and the total number of targets is  `r format(length(unique(mecha_splited[mecha_splited$Drug_brand_name %in% human_drugs_with_mech , ]$Symbol)),big.mark=",",scientific=FALSE)` 
+
+```{r, results='asis', warning= F, echo=FALSE, message=FALSE ,fig.width= 10, fig.height= 10, eval=T}
+
+tbl <- mecha_splited 
+
+tbl$chembl_id <- paste0(paste0("<a href='https://www.ebi.ac.uk/chembl/compound_report_card/", tbl$chembl_id), "'>",tbl$chembl_id,"</a>")
+ 
+cc <- tbl %>% select(Drug_brand_name, ChEMBL_pref_name) %>% unique()
+cc <- aggregate(ChEMBL_pref_name ~ Drug_brand_name , tbl,  function(x)paste(as.character(unique(sort(x))),collapse="; "))
+aa <- aggregate(chembl_id ~ Drug_brand_name , tbl,  function(x)paste(as.character(unique(sort(x))),collapse="; "))
+bb <- aggregate(Symbol ~ Drug_brand_name , tbl,  function(x)paste(as.character(unique(sort(x))),collapse="; "))
+tbl<- merge(aa, bb, by = "Drug_brand_name")
+tbl<- merge(tbl, cc, by = "Drug_brand_name", all.x = T)
+
+# tbl$manual <- ifelse(tbl$Drug_brand_name %in% unique(mecha_splited[mecha_splited$manual == "yes",]$Drug_brand_name), "yes", "no")
+options(DT.options = list(pageLength = 5))
+
+DT::datatable(tbl, caption = "Table 7: Drug target information" ,  filter = 'top', options = list(pageLength = 10,  autoWidth = F), rownames = F, escape = F)
+
+```
+
+# Results 
+
+We will use the [DISGENET API](https://www.disgenet.com/API#console) to retrieve the genes associated to the indications. To perform this operation, you will need to register, to get an API key. 
+
+```{r, echo=F}
+api_key <- "enter your API key here"
+
+```
+
+
+## Exact mappings
+
+
+```{r, results='asis', warning= F, echo=FALSE, message=FALSE ,fig.width= 10, fig.height= 10, eval=T, cache=T}
+aa <- fda_exact_target %>% filter(!is.na(diseaseid)) %>% select(Symbol, diseaseid) %>% unique()
+results <- data.frame(geneNcbiID = character(),
+                      symbolOfGene = character(),
+                      diseaseUMLSCUI = character(),
+                      diseaseName = character(),
+                      score = numeric(),
+                      yearInitial = numeric(),
+                      yearFinal = numeric(),
+                      stringsAsFactors = FALSE)
+for (ii in 1:nrow(aa)) {
+  url <- paste0(base, "gda/summary?gene_symbol=", aa[ii,"Symbol"], "&disease=", paste0("UMLS_",aa[ii,"diseaseid"]), "&source=ALL" )
+  # print(url)
+ # https://api.disgenetplus.com/api/v1/gda/summary?gene_symbol=AKT3&disease=UMLS_C0006142
+gdas <- get_data_api(url, verbose = F, api_key  = api_key, n_pags = 100000)
+# print(dim(gdas))
+if(nrow(gdas)> 0){
+  gdas <- gdas %>% select(symbolOfGene, geneNcbiID, diseaseUMLSCUI, diseaseName, score, yearInitial, yearFinal)
+results <- rbind(results, gdas)
+} #else{print(url)} 
+}
+
+gdas <- results
+
+# 
+# url <- paste0(base, "gda/summary?gene_symbol=",  paste(unique(fda_exact_target$symbol), collapse = ","), "&disease=", paste(unique(paste0("UMLS_",fda_exact_target$diseaseid)), collapse = ","), "&source=ALL" )
+# 
+# gdas <- get_data_api(url, verbose = F, api_key  = api_key)
+
+gdas <- gdas %>% select(symbolOfGene, geneNcbiID, diseaseUMLSCUI, diseaseName, score, yearInitial, yearFinal)
+
+
+fda_exact_target_score <- merge(fda_exact_target, gdas, by.x = c("Symbol", "diseaseid"), by.y = c("symbolOfGene", "diseaseUMLSCUI")) %>% select(Symbol, Indication, Drug_brand_name, score) %>% unique()
+
+aa <- aggregate(Symbol ~ Indication+ Drug_brand_name , fda_exact_target_score,  function(x)paste(as.character(x),collapse="; "))
+bb <- aggregate(score ~ Indication+ Drug_brand_name , fda_exact_target_score,  function(x)paste(as.character(x),collapse="; "))
+
+tbl1 <- merge(aa, bb, by = c("Indication", "Drug_brand_name"))
+
+support <- format(length(unique(tbl1$Drug_brand_name))/length(unique(mecha$Drug_brand_name))*100, digits = 3)
+```
+
+Using DISGENET information, we find that `r format(length(unique(tbl1$Drug_brand_name)),big.mark=",",scientific=FALSE)`  drugs have at least a gene associated to their indication ( `r format(length(unique(tbl1$Indication)),big.mark=",",scientific=FALSE)`) in DISGENET, thus `r format(length(unique(tbl1$Drug_brand_name))/length(unique(mecha$Drug_brand_name))*100, digits = 3)` percent of the drugs are supported by genetic info, with exact mappings (counting only the ones that have a human target, thus `r length(unique(mecha$Drug_brand_name))` ).
+
+```{r, results='asis', warning= F, echo=FALSE, message=FALSE ,fig.width= 10, fig.height= 10, eval=T}
+
+datatable(tbl1 , caption = "Table 8: Genetic support for drug indications" ,  filter = 'top', options = list(pageLength = 20, scrollX = TRUE, scrollY = "600px", autoWidth = F), rownames = F)
+
+
+```
+
+
+Figure 1 shows the top scoring gene associated to the pair drug-indication.
+
+```{r, results='asis', warning= F, echo=FALSE, message=FALSE ,fig.width= 10, fig.height= 10, eval=T}
+
+aa <- aggregate(Symbol ~ Indication+ Drug_brand_name , fda_exact_target_score,  max)
+bb <- aggregate(score ~ Indication+ Drug_brand_name , fda_exact_target_score, max)
+
+ddat<- merge(aa, bb, by = c("Indication", "Drug_brand_name"))
+ddat$drugname <- gsub(" \\(\\w+\\)", "", ddat$Drug_brand_name)
+ddat$drugname <- gsub(" \\(Amondys 45\\)", "", ddat$drugname)
+ddat$drugname <- gsub(" \\(\\w+ \\w+\\)", "",ddat$drugname)
+
+ddat$drugname <- gsub("Olanzapine; samidorphan", "LYBALVI", ddat$drugname)
+ddat$drugname <- gsub("Dexmethylphenidate; serdexmethylphenidate", "Azstarys", ddat$drugname)
+
+```
+
+```{r, results='asis', warning= F, echo=FALSE, message=FALSE ,fig.width= 10, fig.height= 10, eval=T}
+
+tt <- reshape2::dcast(drugname~Indication, data= ddat , value.var = "score")
+tt[is.na(tt)] <- 0
+rownames(tt) <- tt$drugname
+tt <- tt %>% select(-drugname)
+cc <- reshape2::dcast(drugname~Indication, data= ddat , value.var = "Symbol")
+cc[is.na(cc)] <- ""
+rownames(cc) <- cc$drugname
+cc <- cc %>% select(-drugname)
+heatmaply::heatmaply(
+  tt, colors = RColorBrewer::brewer.pal(name = "Blues", n = 9),
+  cellnote = cc, custom_hovertext = cc,  cellnote_textposition = "middle center",
+  cellnote_size = 9,show_dendrogram = c(F, F),
+)
+
+
+```
+
+## Similar mappings
+
+
+```{r, results='asis', warning= F, echo=FALSE, message=FALSE ,fig.width= 10, fig.height= 10, eval=T, cache=F}
+ 
+fda_similar_target <- fda_similar_target[ ! fda_similar_target$Drug_brand_name %in% fda_exact_target_score$Drug_brand_name,]
+
+url <- paste0(base, "gda/summary?gene_symbol=",  paste(unique(fda_similar_target$Symbol), collapse = ","), "&disease=", paste(unique(paste0("UMLS_",fda_similar_target$diseaseid)), collapse = ","), "&source=ALL" )
+gdas <- get_data_api(url, verbose = F, api_key  = api_key, n_pags = 10000)
+gdas <- gdas %>% select(symbolOfGene, geneNcbiID, diseaseUMLSCUI, diseaseName, score, yearInitial, yearFinal)
+
+fda_similar_target_score <- merge(fda_similar_target, gdas, by.x = c("Symbol", "diseaseid"), by.y = c("symbolOfGene", "diseaseUMLSCUI")) %>% select(Symbol, Indication, Drug_brand_name,disease_name, score) %>% unique()
+
+aa <- aggregate(Symbol ~ Indication+ Drug_brand_name+disease_name , fda_similar_target_score,  function(x)paste(as.character(x),collapse="; "))
+bb <- aggregate(score ~ Indication+ Drug_brand_name +disease_name, fda_similar_target_score,  function(x)paste(as.character(x),collapse="; "))
+
+tbl2 <- merge(aa, bb, by = c("Indication", "Drug_brand_name", "disease_name"))
+```
+
+
+`r format(length(unique(tbl2$Drug_brand_name)),big.mark=",",scientific=FALSE)`  drugs where found to have at least a gene associated to their indication ( `r format(length(unique(tbl2$Indication)),big.mark=",",scientific=FALSE)`) in DISGENET using the similarity mapping, thus `r format((length(unique(tbl1$Drug_brand_name))+length(unique(tbl2$Drug_brand_name)) )/length(unique(fda$Drug_brand_name))*100, digits = 3)` percent of the drugs are supported by genetic info, with exact mappings or similar, out of the total new drugs `r length(unique(fda$Drug_brand_name))`. 
+
+```{r, results='asis', warning= F, echo=FALSE, message=FALSE ,fig.width= 10, fig.height= 10, eval=T}
+
+datatable(tbl2 , caption = "Table 9: Genetic support for similar indications" ,  filter = 'top', options = list(pageLength = 20, scrollX = TRUE, scrollY = "600px", autoWidth = F), rownames = F)
+
+
+```
+
+
+## Drugs with genetic support for the indication, or a disease similar to the indication 
+
+```{r, results='asis', warning= F, echo=FALSE, message=FALSE ,fig.width= 10, fig.height= 10, eval=T}
+
+aa <- aggregate(Symbol ~ Indication+ Drug_brand_name , fda_similar_target_score,  max)
+bb <- aggregate(score ~ Indication+ Drug_brand_name , fda_similar_target_score, max)
+
+ddat2<- merge(aa, bb, by = c("Indication", "Drug_brand_name"))
+ddat2$drugname <- gsub(" \\(\\w+\\)", "", ddat2$Drug_brand_name)
+
+ddat2$drugname <- gsub(" \\(\\w+ \\w+\\)", "",ddat2$drugname)
+ddat2$drugname <- gsub("Drospirenone; estetrol", "Nextstellis",ddat2$drugname)
+
+
+ddat <- rbind(ddat, ddat2)
+
+tt <- reshape2::dcast(drugname~Indication, data= ddat , value.var = "score")
+tt[is.na(tt)] <- 0
+rownames(tt) <- tt$drugname
+tt <- tt %>% select(-drugname)
+cc <- reshape2::dcast(drugname~Indication, data= ddat , value.var = "Symbol")
+cc[is.na(cc)] <- ""
+rownames(cc) <- cc$drugname
+cc <- cc %>% select(-drugname)
+
+
+heatmaply::heatmaply(
+  tt, colors = RColorBrewer::brewer.pal(name = "Blues", n = 9),
+    # col_side_colors = annot,
+    #col_side_colors = as.character(ifelse(colnames(tt) %in% fda_exact_target_score$Indication, "exact", "similar")),
+  cellnote = cc, custom_hovertext = cc,  cellnote_textposition = "middle center",
+  cellnote_size = 9,show_dendrogram = c(F, F),
+)
+
+```
+
+If we consider the drugs that target human proteins, the percent raises to `r format((length(unique(tbl1$Drug_brand_name))+length(unique(tbl2$Drug_brand_name)) )/length(unique(human_drugs_with_mech))*100, digits = 3)`. 
+
+
+## Drug without genetic suppport
+
+Drugs that do not have a genetic support are shown in the table below
+
+```{r, results='asis', warning= F, echo=FALSE, message=FALSE ,fig.width= 10, fig.height= 10, eval=T}
+
+tbl <- fda[fda$Drug_brand_name %in% mecha$Drug_brand_name & ! fda$Drug_brand_name %in% tbl1$Drug_brand_name & ! fda$Drug_brand_name %in% tbl2$Drug_brand_name, ] %>% select(Drug_brand_name, Properties, Indication) %>% unique()
+
+dat <- fda_both[ fda_both$Drug_brand_name %in% tbl$Drug_brand_name, ] %>% select(Drug_brand_name, Indication,  Symbol) %>% unique()
+aa <- aggregate(Symbol ~ Indication+ Drug_brand_name , dat,  function(x)paste(as.character(unique(sort(x))),collapse="; "))
+# 
+# tt <- merge(aa, bb, by = c("Indication", "Drug_brand_name"))
+# tbl <- merge(dat, aa, by = c("Drug_brand_name", "Indication"))
+kableExtra::kable(aa, caption = "Table 10: Drugs without genetic support", row.names = T) %>%  kableExtra::kable_styling(bootstrap_options = "striped", full_width = F)
+
+
+```
+
+
+
+# Conclusion
+In summary, this analysis shows that DISGENET provides genetic support for   `r format((length(unique(tbl1$Drug_brand_name))+length(unique(tbl2$Drug_brand_name)) )/length(unique(human_drugs_with_mech))*100, digits = 3)`% of the drugs approved during 2023 by the FDA. Thus, DISGENET is a key resource for drug R&D to provide actionable information on potential targets for a wide range of indications.
+In addition, it illustrates the potential of DISGENET as a resource for information on disease biomarkers, as it also contains the evidence that relates the association of the biomarkers with their indications for the two imaging agents approved by the FDA.
+
+# References
